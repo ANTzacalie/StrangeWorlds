@@ -1,6 +1,6 @@
 from mainScript import getValues , pygame , screen , color , Text , clock , width , height , fps , key_left , key_right , my_font , lvl_start , storeValues , lvl_end , antialiasing , getScore , saveScore , saveLevel
 
-obj_height = height - 88
+obj_height = height - 25
 last_obj_colision = None 
 move_right = True 
 move_left = True
@@ -81,7 +81,7 @@ class Player:
         self.playerRect.x += self.velX
     
     #coliziunea playerului cu alte obiect(teren)
-    def playerColision(self , vector):
+    def playerColision(self , vector , vectorColision):
         global move_right , move_left , obj_height , last_obj_colision
 
         i = None #aici cautam daca suntem in coliziune cu vre un obiect din vector
@@ -91,31 +91,26 @@ class Player:
 
         if i is not None:
             
-            #coliziune la stanga obiectui
-            if self.playerRect.right >= vector[i].left and self.playerRect.left < vector[i].left and self.playerRect.bottom <= vector[i].bottom and self.playerRect.top > vector[i].top:
+            if self.playerRect.right >= vector[i].left and self.playerRect.right <= vector[i].left + 6 and self.playerRect.left < vector[i].left and self.playerRect.top <= vector[i].bottom:
                 self.playerRect.right = vector[i].left - 2
                 move_right = False; self.right_key = False
-            
-            #coliziune la dreapta obictului 
-            if self.playerRect.left <= vector[i].right and self.playerRect.right > vector[i].right and self.playerRect.bottom <= vector[i].bottom and self.playerRect.top > vector[i].top:
+            elif self.playerRect.left <= vector[i].right and self.playerRect.left >= vector[i].right - 6 and self.playerRect.right > vector[i].right and self.playerRect.top <= vector[i].bottom:
                 self.playerRect.left = vector[i].right + 2
                 move_left = False; self.left_key = False
-            
-            #coliziune deasupra obiectului
-            if (self.playerRect.bottom >= vector[i].top) and self.playerRect.right > vector[i].left  and self.playerRect.left < vector[i].right:
-                obj_height = vector[i].top
-                last_obj_colision = vector[i]
 
-            #coliziune sub obiect
             if (self.playerRect.top <= vector[i].bottom and self.playerRect.top > vector[i].top) and self.playerRect.right > vector[i].left and self.playerRect.left < vector[i].right: 
                 self.playerRect.top = vector[i].bottom; obj_height = height - 25; self.isJump = False; self.jumpSpeed = 8
                 self.isFall = True
 
-        else: #daca nu mai suntem in coliziune cu nici un obiect
+        k = None
+        for k in range(0 , len(vectorColision)):
+            if self.playerRect.colliderect(vectorColision[k]):
+                obj_height = vector[k].top; last_obj_colision = vector[k]; break
+        
+        if i is None: #daca nu mai suntem in coliziune cu nici un obiect
 
             move_right = True
             move_left = True
-            obj_height = height - 25
 
             if last_obj_colision is not None:
 
@@ -123,11 +118,12 @@ class Player:
         
                     self.isFall = True
                     last_obj_colision = None
+                    obj_height = height - 25
 
 #functia Game() pentru fiecare nivel 
 def Game():
 
-    global screen , width , height , fps, color , obj_height , move_left ,move_right , allowJump , key_left , key_right , antialiasing, lvl_start , lvl_end , getScore , saveScore , saveLevel
+    global screen , width , height , fps, color , obj_height , move_left ,move_right , allowJump , key_left , key_right , antialiasing, lvl_start , lvl_end , getScore , saveScore , saveLevel, last_obj_colision
 
     default_values = getValues()
     try:
@@ -167,15 +163,34 @@ def Game():
 
     #fiecare obiect de pe harta(teren)
     scene1_objects = [pygame.Rect(960,960,96,96),pygame.Rect(1152,768,96*4,96),pygame.Rect(1728,672,96*2,96*4)]
+    scene1_topColision = [pygame.Rect(960,960,96,-96),pygame.Rect(1152,768,96*4,-96),pygame.Rect(1728,672,96*2,-96*4)]
+
     scene2_objects = [pygame.Rect(0,672,96*8,96),pygame.Rect(0,768,96*11,96),pygame.Rect(0,864,96*5,96*2),pygame.Rect(1152,960,96,96),pygame.Rect(1056,480,96*3,96),pygame.Rect(1440,288,96*3,96),pygame.Rect(1824,288,96,96*8)]
+    scene2_topColision = [pygame.Rect(0,672,96*8,-96),pygame.Rect(0,768,96*11,-96),pygame.Rect(0,864,96*5,-96),pygame.Rect(1152,960,96,-96),pygame.Rect(1056,480,96*3,-96),pygame.Rect(1440,288,96*3,-96),pygame.Rect(1824,288,96,-96)]
+
     scene3_objects = [pygame.Rect(0,288,96,96*8),pygame.Rect(96,480,96,96*6),pygame.Rect(288,288,96,96),pygame.Rect(480,288,96,96),pygame.Rect(288,576,96,96),pygame.Rect(288,960,96*3,96),pygame.Rect(384,864,96,96),pygame.Rect(576,672,96,96*4),pygame.Rect(672,288,96,96*8),pygame.Rect(960,0,96,96*6),pygame.Rect(864,576,96*3,96),pygame.Rect(768,288,96,96),pygame.Rect(1248,960,96*2,96),pygame.Rect(1440,864,96*5,96*2),pygame.Rect(1632,384,96*3,96),pygame.Rect(1824,0,96,96*4),pygame.Rect(1248,768,96,96*2),pygame.Rect(1344,480,96*2,96),pygame.Rect(1824,672,96,96*2)]
+    scene3_topColision = [pygame.Rect(0,288,96,-96),pygame.Rect(96,480,96,-96),pygame.Rect(288,288,96,-96),pygame.Rect(480,288,96,-96),pygame.Rect(288,576,96,-96),pygame.Rect(288,960,96*3,-96),pygame.Rect(384,864,96,-96),pygame.Rect(576,672,96,-96),pygame.Rect(672,288,96,-96*8),pygame.Rect(960,0,96,-96),pygame.Rect(864,576,96*3,-96),pygame.Rect(768,288,96,-96),pygame.Rect(1248,960,96*2,-96),pygame.Rect(1440,864,96*5,-96),pygame.Rect(1632,384,96*3,-96),pygame.Rect(1824,0,96,-96),pygame.Rect(1248,768,96,-96),pygame.Rect(1344,480,96*2,-96),pygame.Rect(1824,672,96,-96)]
+
     scene4_objects = [pygame.Rect(0,672,96*3,96),pygame.Rect(0,768,96,96*3),pygame.Rect(288,864,96,96*2),pygame.Rect(384,576,96,96),pygame.Rect(576,480,96,96),pygame.Rect(864,480,96,96),pygame.Rect(1152,672,96*8,96),pygame.Rect(1248,768,96*7,96),pygame.Rect(1248,0,96,96*6),pygame.Rect(1344,480,96*3,96),pygame.Rect(1824,0,96,96*7),pygame.Rect(1440,288,96,96),pygame.Rect(1536,192,96,96),pygame.Rect(1824,1056,96,96)]
+    scene4_topColision = [pygame.Rect(0,672,96*3,-96),pygame.Rect(0,768,96,-96),pygame.Rect(288,864,96,-96),pygame.Rect(384,576,96,-96),pygame.Rect(576,480,96,-96),pygame.Rect(864,480,96,-96),pygame.Rect(1152,672,96*8,-96),pygame.Rect(1248,768,96*7,-96),pygame.Rect(1248,0,96,-96),pygame.Rect(1344,480,96*3,-96),pygame.Rect(1824,0,96,-96),pygame.Rect(1440,288,96,-96),pygame.Rect(1536,192,96,-96),pygame.Rect(1824,1056,96,-96)]
+
     scene5_objects = [pygame.Rect(25,1080,60,24),pygame.Rect(0,672,96*3,96),pygame.Rect(0,0,96,96*7),pygame.Rect(384,864,96,96*2),pygame.Rect(288,384,96,96),pygame.Rect(576,288,96*2,96),pygame.Rect(864,768,96,96*3),pygame.Rect(768,960,96,96),pygame.Rect(1152,672,96*2,96),pygame.Rect(1152,576,96,96),pygame.Rect(1344,768,96*3,96),pygame.Rect(1632,672,96,96),pygame.Rect(1824,768,96,96*3),pygame.Rect(1728,576,96*2,96*2)]
+    scene5_topColision = [pygame.Rect(25,1080,60,-24),pygame.Rect(0,672,96*3,-96),pygame.Rect(0,0,96,-96),pygame.Rect(384,864,96,-96),pygame.Rect(288,384,96,-96),pygame.Rect(576,288,96*2,-96),pygame.Rect(864,768,96,-96),pygame.Rect(768,960,96,-96),pygame.Rect(1152,672,96*2,-96),pygame.Rect(1152,576,96,-96),pygame.Rect(1344,768,96*3,-96),pygame.Rect(1632,672,96,-96),pygame.Rect(1824,768,96,-96),pygame.Rect(1728,576,96*2,-96)]
+
     scene6_objects = [pygame.Rect(0,576,96*2,96*5),pygame.Rect(192,480,96,96*6),pygame.Rect(384,768,96*4,96),pygame.Rect(480,384,96,96*4),pygame.Rect(576,576,96,96*2),pygame.Rect(960,768,96*2,96),pygame.Rect(1152,960,96,96),pygame.Rect(768,288,96*3,96),pygame.Rect(1152,288,96,96),pygame.Rect(1344,288,96,96),pygame.Rect(1536,288,96,96),pygame.Rect(1824,288,96,96*8)]
+    scene6_topColision = [pygame.Rect(0,576,96*2,-96),pygame.Rect(192,480,96,-96),pygame.Rect(384,768,96*4,-96),pygame.Rect(480,384,96,-96),pygame.Rect(576,576,96,-96),pygame.Rect(960,768,96*2,-96),pygame.Rect(1152,960,96,-96),pygame.Rect(768,288,96*3,-96),pygame.Rect(1152,288,96,-96),pygame.Rect(1344,288,96,-96),pygame.Rect(1536,288,96,-96),pygame.Rect(1824,288,96,-96)]
+
     scene7_objects = [pygame.Rect(0,288,96*3,96*8),pygame.Rect(288,768,96,96),pygame.Rect(576,576,96,96),pygame.Rect(672,384,96*2,96*7),pygame.Rect(864,768,96,96),pygame.Rect(1152,576,96,96),pygame.Rect(1248,480,96*2,96*6),pygame.Rect(1440,768,96,96),pygame.Rect(1728,672,96,96),pygame.Rect(1824,576,96,96*5)]
+    scene7_topColision = [pygame.Rect(0,288,96*3,-96),pygame.Rect(288,768,96,-96),pygame.Rect(576,576,96,-96),pygame.Rect(672,384,96*2,-96),pygame.Rect(864,768,96,-96),pygame.Rect(1152,576,96,-96),pygame.Rect(1248,480,96*2,-96),pygame.Rect(1440,768,96,96),pygame.Rect(1728,672,96,-96),pygame.Rect(1824,576,96,-96)]
+
     scene8_objects = [pygame.Rect(0,576,96,96*5),pygame.Rect(384,0,96,96*9),pygame.Rect(672,864,96,96*2),pygame.Rect(768,672,96*2,96),pygame.Rect(1152,672,96,96),pygame.Rect(1536,672,96*2,96),pygame.Rect(1728,480,96,96),pygame.Rect(1440,288,96*2,96),pygame.Rect(1152,288,96,96),pygame.Rect(960,288,96,96),pygame.Rect(480,288,96*2,96),pygame.Rect(1824,192,96,96*9)]
-    scene9_objects = [pygame.Rect(0,192,96,96*9),pygame.Rect(288,960,96*4,96),pygame.Rect(480,864,96,96),pygame.Rect(672,672,96*2,96),pygame.Rect(1152,576,96*2,96),pygame.Rect(1824,480,96,96*6),pygame.Rect(1536,384,96*4,96)]
-    scene10_objects= [pygame.Rect(0,384,96,96*7),pygame.Rect(96,672,96*2,96),pygame.Rect(288,960,96,96),pygame.Rect(384,576,96,96*2),pygame.Rect(768,672,96,96),pygame.Rect(1152,672,96*4,96*4),pygame.Rect(1440,384,96*4,96),pygame.Rect(1728,672,96*2,96*4),pygame.Rect(1728,480,96,96*2),pygame.Rect(1536,960,96*2,96)]
+    scene8_topColision = [pygame.Rect(0,576,96,-96),pygame.Rect(384,0,96,-96),pygame.Rect(672,864,96,-96),pygame.Rect(768,672,96*2,-96),pygame.Rect(1152,672,96,-96),pygame.Rect(1536,672,96*2,-96),pygame.Rect(1728,480,96,-96),pygame.Rect(1440,288,96*2,-96),pygame.Rect(1152,288,96,-96),pygame.Rect(960,288,96,-96),pygame.Rect(480,288,96*2,-96),pygame.Rect(1824,192,96,-96)]
+
+    scene9_objects = [pygame.Rect(0,192,96,96),pygame.Rect(288,960,96*4,96),pygame.Rect(480,864,96,96),pygame.Rect(672,672,96*2,96),pygame.Rect(1152,576,96*2,96),pygame.Rect(1824,480,96,96),pygame.Rect(1536,384,96*4,96)]
+    scene9_topColision = [pygame.Rect(0,192,96,-96),pygame.Rect(288,960,96*4,-96),pygame.Rect(480,864,96,-96),pygame.Rect(672,672,96*2,-96),pygame.Rect(1152,576,96*2,-96),pygame.Rect(1824,480,96,-96),pygame.Rect(1536,384,96*4,-96)]
+
+    scene10_objects= [pygame.Rect(0,384,96,96*7),pygame.Rect(96,672,96*2,96),pygame.Rect(288,960,96,96),pygame.Rect(384,576,96,96*2),pygame.Rect(768,672,96,96),pygame.Rect(1152,672,96*4,96*4),pygame.Rect(1440,384,96*4,96),pygame.Rect(1728,672,96*2,96*4),pygame.Rect(1728,480,96,96*2),pygame.Rect(1536,1020,96*2,30)]
+    scene10_topColision= [pygame.Rect(0,384,96,-96),pygame.Rect(96,672,96*2,-96),pygame.Rect(288,960,96,-96),pygame.Rect(384,576,96,-96),pygame.Rect(768,672,96,-96),pygame.Rect(1152,672,96*4,-96),pygame.Rect(1440,384,96*4,-96),pygame.Rect(1728,672,96*2,-96),pygame.Rect(1728,480,96,-96)]
 
     #fiecare obiect de pe harta(puncte)
     scene1_points = []
@@ -190,6 +205,7 @@ def Game():
     scene10_points= [pygame.Rect(576,384,96,96)]
 
     scenes_vector = [scene1_objects, scene2_objects, scene3_objects , scene4_objects , scene5_objects , scene6_objects , scene7_objects , scene8_objects , scene9_objects , scene10_objects]
+    scenes_vectorTopColision = [scene1_topColision , scene2_topColision , scene3_topColision , scene4_topColision , scene5_topColision , scene6_topColision , scene7_topColision , scene8_topColision , scene9_topColision , scene10_topColision]
     scenes_points = [scene1_points,scene2_points,scene3_points,scene4_points,scene5_points,scene6_points,scene7_points,scene8_points,scene9_points,scene10_points] # vor fi toate stelutele pentru toate scenele
     while True:
         
@@ -237,12 +253,13 @@ def Game():
             size = len(scenes_vector[scenes_counter]) - 1
             player.playerRect.right = scenes_vector[scenes_counter][size].right - 10
             player.playerRect.bottom = scenes_vector[scenes_counter][size].top
-
+            
         if player.playerRect.right >= width and scenes_counter != 9:
 
             scenes_counter = scenes_counter + 1
             player.playerRect.x = scenes_vector[scenes_counter][0].x
             player.playerRect.bottom = scenes_vector[scenes_counter][0].top
+            
         elif player.playerRect.colliderect(scene10_objects[9]) and scenes_counter == max_scene:
             
             #de odata ce playerul ajunge la finalul primului nivel se salveaza scorul in db si ca novelul este terminat
@@ -251,13 +268,13 @@ def Game():
 
             #trecem la nivelul 2
             import secondLevel; secondLevel.Game(); return 0
-        
+
         #apel la functia update din Player class
         player.update()
         #apel la functia draw din Player class
         player.draw(screen)
         #apel la functia playerColision din Player class
-        player.playerColision(scenes_vector[scenes_counter])
+        player.playerColision(scenes_vector[scenes_counter] , scenes_vectorTopColision[scenes_counter])
         
         #scorul afisat pe ecran
         Text.displayText("SCORE: " + str(player.player_score) , width - 250, 50 , color[0] , screen , my_font)
